@@ -2,7 +2,7 @@
 CC = g++ -g
 CC_FLAGS = -fopenmp
 
-destDir = /tmp/conversor
+destDir = /tmp/conversor_duplication
 
 all: gen_bin gen_data mv_bin
 
@@ -10,7 +10,7 @@ gen_bin: main.cpp data.cpp
 	$(CC) $(CC_FLAGS) main.cpp data.cpp -o conversor
 
 gen_data: gen_bin
-	./conversor files/test_1.obj gold.foo
+	./conversor files/test_1.obj gold.foo detect.log
 
 mv_bin: gen_data
 	mkdir -p $(destDir)

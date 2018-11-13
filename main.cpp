@@ -16,12 +16,13 @@ using namespace std;
 Face load_face(stringstream&, vector<Vertex>, vector<Vertex>);
 Mesh load_obj(ifstream&);
 Mesh load_foo(ifstream&);
+void compare_outputs(Mesh, Mesh, char*);
 
 int main(int argc, char **argv){
 	ifstream inFile;
 	ofstream outFile;
 
-	if (argc==3){
+	if (argc==4){
 		inFile.open(argv[1]);
 		if (!inFile){
 			cout << "Unable to open file";
@@ -30,13 +31,22 @@ int main(int argc, char **argv){
 
 		//clock_t begin = clock();
 
-		Mesh m;
-		m = load_obj(inFile);
+		Mesh m = load_obj(inFile);
+		inFile.close();
+
+		// duplication
+		inFile.open(argv[1]);
+		if (!inFile){
+			cout << "Unable to open file";
+		  exit(1); // terminate with error
+		}
+		Mesh m2 = load_obj(inFile);
 		inFile.close();
 
 		//clock_t end = clock();
 		//cout << "leu arquivo: " << double(end - begin)/CLOCKS_PER_SEC << endl;
 
+		compare_outputs(m,m2,argv[3]);
 
 		outFile.open(argv[2]);
 		outFile << m.to_str() << endl;
@@ -49,7 +59,7 @@ int main(int argc, char **argv){
 		cout << "Help:" << endl;
 		cout << "This program makes the conversion of a .obj file to a .foo file" << endl;
 		cout << "Usage : " << endl;
-		cout << "conversor in_file out_file" << endl;
+		cout << "conversor in_file out_file detect_log" << endl;
 	}
 
 	return 0;
@@ -131,4 +141,44 @@ Mesh load_obj(ifstream& inFile)
 	}
 	inFile.close();
 	return m;
+}
+
+void compare_outputs(Mesh m1, Mesh m2, char* detect_log){
+	ofstream detect_file;
+	vector<Face> fm1 = m1.getFaces();
+	vector<Face> fm2 = m2.getFaces();
+
+	size_t f1count = fm1.size();
+	size_t f2count = fm2.size();
+	if (f1count != f2count)
+	{
+		detect_file.open(detect_log);
+		detect_file << "Mesh has diferent number of faces for each execution:" << endl;
+		detect_file << "Execution 1: " << f1count << endl;
+		detect_file << "Execution 2: " << f2count << endl << endl;
+		detect_file << "Output of Execution 2: " << endl << m2.to_str();
+		detect_file.close();
+		return;
+	}
+
+	for (size_t i = 0; i < fm1.size(); i++)
+	{
+		vector<Vertex> vm1 = fm1[i].getVertexes();
+		vector<Vertex> vm2 = fm2[i].getVertexes();
+
+		for (size_t j = 0; j<vm1.size(); j++)
+		{
+			if ( !(vm1[j] == vm2[j]) )
+			{
+				detect_file.open(detect_log);
+				detect_file << "Face " << i+1 << ":" << endl;
+				detect_file << "Execution 1: " << fm1[i].to_str() << endl;
+				detect_file << "Execution 2: " << fm2[i].to_str() << endl << endl;
+				detect_file << "Output of Execution 2: " << endl << m2.to_str();
+				detect_file.close();
+				return;
+			}
+		}
+	}
+
 }
